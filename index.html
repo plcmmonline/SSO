@@ -1,0 +1,753 @@
+<title>Lyrics Service Editor</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.24.2/dist/index.iife.js"></script>
+<style>
+:root{--bg0:#07070d;--bg1:#0d0d14;--bg2:#141420;--bg3:#1c1c2a;--bg4:#242436;--accent:#4da6ff;--adim:#0e2438;--ok:#44cc77;--warn:#ffd966;--danger:#ff5252;--text:#dce0f0;--t2:#8890aa;--t3:#42455e;--bdr:#1e1e32;--bdr2:#16162a;color-scheme:dark;}
+@media(prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg0:#f0f0f6;--bg1:#f8f8fc;--bg2:#fff;--bg3:#ececf4;--bg4:#e2e2ee;--text:#181828;--t2:#4e5268;--t3:#9298b0;--bdr:#d0d0e2;--bdr2:#e4e4f0;--adim:#ddeeff;color-scheme:light;}}
+:root[data-theme="light"]{--bg0:#f0f0f6;--bg1:#f8f8fc;--bg2:#fff;--bg3:#ececf4;--bg4:#e2e2ee;--text:#181828;--t2:#4e5268;--t3:#9298b0;--bdr:#d0d0e2;--bdr2:#e4e4f0;--adim:#ddeeff;color-scheme:light;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;background:var(--bg1);color:var(--text);font-family:'Inter',system-ui,sans-serif;font-size:13px;}
+#app{display:grid;grid-template-columns:220px 1fr 260px;height:100%;overflow:hidden;}
+@media(max-width:680px){#app{grid-template-columns:1fr;}#mobTabs{display:flex;}}
+#mobTabs{display:none;background:var(--bg2);border-bottom:1px solid var(--bdr);}
+.mtab{flex:1;padding:8px;background:none;border:none;border-bottom:2px solid transparent;color:var(--t3);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;}
+.mtab.on{color:var(--accent);border-bottom-color:var(--accent);}
+.col{display:flex;flex-direction:column;overflow:hidden;min-height:0;}
+#c1{background:var(--bg0);border-right:1px solid var(--bdr);}
+#c2{background:var(--bg1);}
+#c3{background:#f7f8fa;border-left:1px solid #d8dce8;}
+@media(max-width:680px){.col{display:none;}.col.on{display:flex;}}
+.chdr{padding:6px 10px;background:var(--bg2);border-bottom:1px solid var(--bdr);flex-shrink:0;display:flex;align-items:center;gap:6px;}
+.chdr-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--t3);flex:1;}
+#c3 .chdr{background:#eef0f6;border-bottom:1px solid #d0d4e4;}
+#c3 .chdr-lbl{color:#8890a8;}
+.iBtn{width:22px;height:22px;border-radius:4px;border:1px solid var(--bdr);background:transparent;color:var(--t3);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;flex-shrink:0;}
+.iBtn:hover{border-color:var(--accent);color:var(--accent);}
+.iBtn.s{width:18px;height:18px;font-size:10px;border-radius:3px;}
+.iBtn.d:hover{border-color:var(--danger);color:var(--danger);}
+.iBtn.g:hover{border-color:var(--ok);color:var(--ok);}
+.btn{padding:5px 12px;border-radius:5px;border:1px solid var(--bdr);background:var(--bg3);color:var(--t2);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;}
+.btn:hover{border-color:var(--t2);color:var(--text);}
+.btn.a{border-color:#1a3a5c;color:var(--accent);background:#07101c;}.btn.a:hover{background:#0c1828;}
+.btn.ok{border-color:#1a4228;color:var(--ok);background:#061210;}.btn.ok:hover{background:#091a14;}
+.btn.dan{border-color:#4a1818;color:var(--danger);background:#100606;}.btn.dan:hover{background:#1a0808;}
+::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:3px;}
+
+/* SO header strip */
+#soStrip{flex-shrink:0;padding:6px 8px;background:var(--bg2);border-bottom:1px solid var(--bdr);display:flex;flex-direction:column;gap:4px;}
+#soNameRow{display:flex;align-items:center;gap:4px;}
+#soName{font-size:11px;font-weight:600;color:var(--text);flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;}
+#soName:hover{color:var(--accent);}
+#soStatus{font-size:9px;color:var(--t3);}
+#soBtnRow{display:flex;gap:3px;}
+.soBtn{flex:1;padding:4px 2px;border-radius:4px;border:1px solid var(--bdr);background:var(--bg3);color:var(--t3);font-size:9px;font-weight:600;cursor:pointer;text-align:center;font-family:inherit;}
+.soBtn:hover{border-color:var(--t2);color:var(--text);}
+.soBtn.a{border-color:#1a3050;color:var(--accent);background:#06101c;}.soBtn.a:hover{background:#0a1828;}
+
+/* C1 list */
+#svcScroll{flex:1;overflow-y:auto;min-height:0;}
+.svcEmpty{padding:20px 10px;color:var(--t3);font-size:11px;text-align:center;line-height:1.8;}
+.svcRow{padding:8px 9px;border-bottom:1px solid var(--bdr2);display:flex;align-items:flex-start;gap:7px;cursor:pointer;}
+.svcRow:hover{background:var(--bg3);}
+.svcRow.on{background:var(--adim);border-left:3px solid var(--accent);padding-left:6px;}
+.stripe{width:3px;flex-shrink:0;border-radius:2px;align-self:stretch;margin-top:2px;}
+.s-s{background:var(--accent);}.s-p{background:var(--warn);}
+.svcInfo{flex:1;min-width:0;}
+.svcTitle{font-size:11px;font-weight:600;color:var(--text);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.svcRow.on .svcTitle{color:var(--accent);}
+.svcMeta{font-size:9px;color:var(--t3);margin-top:2px;}
+.svcBtns{display:flex;flex-direction:column;gap:2px;flex-shrink:0;}
+.svcBtnRow{display:flex;gap:2px;}
+#c1Footer{flex-shrink:0;padding:7px 8px;border-top:1px solid var(--bdr);display:flex;flex-direction:column;gap:5px;}
+#addPicker{display:none;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;overflow:hidden;}
+#addPicker.on{display:block;}
+.pickBtn{display:block;width:100%;padding:8px 12px;background:none;border:none;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;text-align:left;font-family:inherit;}
+.pickBtn:hover{background:var(--bg4);}
+#c1BtnRow{display:flex;gap:4px;}
+.fBtn{flex:1;padding:5px 4px;border-radius:4px;border:1px solid var(--bdr);background:var(--bg2);color:var(--t2);font-size:10px;font-weight:600;cursor:pointer;text-align:center;font-family:inherit;}
+.fBtn:hover{border-color:var(--t2);color:var(--text);}
+.fBtn.a{border-color:#1a3050;color:var(--accent);background:#06101c;}.fBtn.a:hover{background:#0a1828;}
+
+/* C2 */
+.c2Scroll{flex:1;overflow-y:auto;padding:12px;min-height:0;}
+.c2Bar{flex-shrink:0;padding:6px 10px;background:var(--bg2);border-top:1px solid var(--bdr);display:flex;gap:6px;align-items:center;}
+.empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--t3);text-align:center;}
+.ei{font-size:30px;opacity:0.2;}.ep{font-size:11px;max-width:200px;line-height:1.6;}
+
+/* Song library */
+#libSrchWrap{flex-shrink:0;padding:6px 8px;border-bottom:1px solid var(--bdr2);}
+#libSrchWrap input{width:100%;padding:5px 8px;background:var(--bg2);border:1px solid var(--bdr);border-radius:5px;color:var(--text);font-size:11px;font-family:inherit;}
+#libSrchWrap input:focus{outline:none;border-color:var(--accent);}
+#libSrchWrap input::placeholder{color:var(--t3);}
+#libItems{flex:1;overflow-y:auto;min-height:0;}
+.libRow{padding:8px 10px;border-bottom:1px solid var(--bdr2);cursor:pointer;}
+.libRow:hover{background:var(--bg3);}
+.libRow.on{background:var(--adim);border-left:3px solid var(--accent);padding-left:7px;}
+.libTop{display:flex;align-items:flex-start;gap:7px;}
+.libInfo{flex:1;min-width:0;}
+.libTitle{font-size:12px;font-weight:600;color:var(--text);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.libRow.on .libTitle{color:var(--accent);}
+.libMeta{font-size:9px;color:var(--t3);margin-top:2px;}
+#libFoot{flex-shrink:0;padding:6px 8px;border-top:1px solid var(--bdr);display:flex;gap:4px;}
+
+/* Forms */
+.frow{display:flex;gap:8px;margin-bottom:10px;}
+.fg{flex:1;display:flex;flex-direction:column;gap:4px;}
+.fl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--t3);}
+.fi{padding:6px 9px;background:var(--bg2);border:1px solid var(--bdr);border-radius:5px;color:var(--text);font-size:12px;font-family:inherit;}
+.fi:focus{outline:none;border-color:var(--accent);}
+.fi::placeholder{color:var(--t3);}
+.fta{padding:7px 9px;background:var(--bg2);border:1px solid var(--bdr);border-radius:5px;color:var(--text);font-size:12px;font-family:'Consolas',monospace;resize:vertical;width:100%;line-height:1.55;}
+.fta:focus{outline:none;border-color:var(--accent);}
+.sdiv{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t3);margin:12px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--bdr2);}
+
+/* Quick paste panel */
+.qpanel{background:var(--bg2);border:1px solid var(--bdr);border-radius:7px;overflow:hidden;margin-bottom:12px;}
+.qphdr{padding:7px 10px;display:flex;align-items:center;gap:7px;cursor:pointer;background:var(--bg3);}
+.qphdr:hover{background:var(--bg4);}
+.qptitle{font-size:11px;font-weight:600;color:var(--t2);}
+.qpsub{font-size:9px;color:var(--t3);flex:1;}
+.qpchev{font-size:9px;color:var(--t3);}
+.qpbody{display:none;padding:10px;}
+.qpbody.on{display:block;}
+.qphint{font-size:9px;color:var(--t3);margin-bottom:7px;line-height:1.5;}
+.qpbody .fta{font-size:11px;}
+.qprow{display:flex;gap:6px;margin-top:7px;align-items:center;}
+.qpck{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2);}
+.qpck input{accent-color:var(--accent);}
+
+/* Section cards */
+.sc{background:var(--bg2);border:1px solid var(--bdr);border-radius:7px;margin-bottom:7px;overflow:hidden;}
+.schdr{padding:7px 10px;display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;background:var(--bg3);}
+.schdr:hover{background:var(--bg4);}
+.tbdg{font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;text-transform:uppercase;letter-spacing:0.5px;flex-shrink:0;}
+.tv{background:#0e2540;color:#6db8ff;}.tc{background:#28103e;color:#cc88ff;}.tb{background:#0e2a1a;color:#55dd88;}
+.tp{background:#2e1e08;color:#ffc055;}.to{background:#1e1e26;color:#8890a8;}.ti{background:#2a0e2a;color:#ff88cc;}.tx{background:#1e1e1e;color:#666;}
+.sclbl{flex:1;font-size:11px;font-weight:600;color:var(--text);}
+.scchev{font-size:9px;color:var(--t3);}
+.scdel{width:18px;height:18px;border-radius:3px;border:1px solid transparent;background:transparent;color:var(--t3);font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.scdel:hover{border-color:var(--danger);color:var(--danger);}
+.scbody{padding:10px;display:none;}
+.scbody.on{display:block;}
+.ckrow{display:flex;align-items:center;gap:7px;margin-top:8px;}
+.ckrow input[type=checkbox]{accent-color:var(--accent);}
+.ckrow label{font-size:11px;color:var(--t2);cursor:pointer;}
+.pyprev{margin-top:6px;padding:7px 9px;background:#060f1a;border:1px solid #1a3050;border-radius:4px;font-size:11px;color:#6a9ecc;line-height:1.8;font-family:monospace;min-height:26px;white-space:pre-wrap;word-break:break-all;}
+.addsec{width:100%;padding:9px;background:transparent;border:1px dashed var(--bdr);border-radius:7px;color:var(--t3);font-size:11px;cursor:pointer;text-align:center;margin-top:2px;font-family:inherit;}
+.addsec:hover{border-color:var(--accent);color:var(--accent);background:#06121e;}
+
+/* C3 bright */
+#slides{flex:1;overflow-y:auto;min-height:0;padding:8px;display:flex;flex-direction:column;gap:6px;background:#f7f8fa;}
+.c3mt{flex:1;display:flex;align-items:center;justify-content:center;background:#f7f8fa;}
+.c3mp{color:#b0b4c8;font-size:11px;text-align:center;}
+.slide{background:#fff;border:1px solid #d0d4e0;border-radius:5px;overflow:hidden;aspect-ratio:16/9;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+.sbdg{position:absolute;top:5px;left:5px;font-size:8px;font-weight:700;padding:2px 6px;border-radius:3px;text-transform:uppercase;opacity:0.85;}
+.slide .tv{background:#ddeeff;color:#1a5090;}.slide .tc{background:#ecddf6;color:#6030a0;}.slide .tb{background:#d6f0e0;color:#1a5030;}
+.slide .tp{background:#fdeedd;color:#904810;}.slide .to{background:#eeeef4;color:#505070;}.slide .ti{background:#f0ddf0;color:#802880;}.slide .tx{background:#e8e8e8;color:#505050;}
+.stxt{font-size:11px;color:#181828;text-align:center;line-height:1.65;white-space:pre-wrap;max-width:100%;word-break:break-word;}
+.spytxt{font-size:9px;color:#3060a0;text-align:center;line-height:1.55;white-space:pre-wrap;max-width:100%;word-break:break-word;margin-top:3px;}
+.strtxt{font-size:9px;color:#306830;text-align:center;line-height:1.55;white-space:pre-wrap;max-width:100%;word-break:break-word;margin-top:2px;font-style:italic;}
+.snum{position:absolute;bottom:4px;right:6px;font-size:8px;color:#b8bcd0;}
+#slideCnt{font-size:9px;color:#a0a4b8;}
+
+/* Overlay modals */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}
+.overlay.off{display:none;}
+.modal{background:var(--bg2);border:1px solid var(--bdr);border-radius:10px;width:100%;max-width:400px;overflow:hidden;}
+.modal-hdr{padding:12px 14px 8px;font-size:13px;font-weight:700;color:var(--text);border-bottom:1px solid var(--bdr2);}
+.modal-body{padding:14px;}
+.modal-foot{padding:8px 14px 12px;display:flex;gap:6px;justify-content:flex-end;}
+.modal input.fi{width:100%;}
+
+/* SO load list modal */
+.modal.wide{max-width:460px;}
+#soListItems{max-height:280px;overflow-y:auto;margin-top:8px;}
+.soItem{padding:10px 10px;border:1px solid var(--bdr2);border-radius:6px;margin-bottom:6px;display:flex;align-items:center;gap:8px;cursor:pointer;}
+.soItem:hover{background:var(--bg3);}
+.soItem-info{flex:1;min-width:0;}
+.soItem-name{font-size:12px;font-weight:600;color:var(--text);}
+.soItem-meta{font-size:9px;color:var(--t3);margin-top:2px;}
+.soEmpty{padding:20px;color:var(--t3);font-size:11px;text-align:center;}
+
+/* Toast */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;padding:8px 16px;font-size:11px;color:var(--text);pointer-events:none;opacity:0;transition:opacity .2s;z-index:9999;white-space:nowrap;}
+#toast.on{opacity:1;}#toast.ok{border-color:#1a4228;color:var(--ok);}#toast.er{border-color:#4a1818;color:var(--danger);}
+</style>
+
+<div id="mobTabs">
+  <button class="mtab on" onclick="mobSw('c1')">Service</button>
+  <button class="mtab" onclick="mobSw('c2')">Content</button>
+  <button class="mtab" onclick="mobSw('c3')">Preview</button>
+</div>
+<div id="app">
+  <!-- C1 -->
+  <div id="c1" class="col on">
+    <div class="chdr"><span class="chdr-lbl">Service Order</span></div>
+    <div id="soStrip">
+      <div id="soNameRow">
+        <span id="soName" title="Click to rename" onclick="renameSo()">Untitled Service</span>
+        <button class="iBtn s" title="Rename" onclick="renameSo()">✏</button>
+      </div>
+      <div id="soStatus"></div>
+      <div id="soBtnRow">
+        <button class="soBtn" onclick="newSo()">New</button>
+        <button class="soBtn a" onclick="saveSo()">Save</button>
+        <button class="soBtn" onclick="openLoadModal()">Load</button>
+      </div>
+    </div>
+    <div id="svcScroll"></div>
+    <div id="c1Footer">
+      <div id="addPicker">
+        <button class="pickBtn" onclick="startAddPara()">¶&nbsp; Add Paragraph</button>
+        <button class="pickBtn" onclick="startAddSong()">♪&nbsp; Add Song</button>
+      </div>
+      <div id="c1BtnRow">
+        <button class="fBtn" id="addBtn" onclick="togglePicker()">+ Add</button>
+        <button class="fBtn a" onclick="doExport()">⬇ Export</button>
+        <button class="fBtn" onclick="document.getElementById('impSvc').click()">⬆ Import</button>
+        <input type="file" id="impSvc" accept=".json" style="display:none" onchange="importSvc(event)">
+      </div>
+    </div>
+  </div>
+
+  <!-- C2 -->
+  <div id="c2" class="col on">
+    <div class="chdr"><span class="chdr-lbl" id="c2lbl">Content</span></div>
+    <div id="c2body" style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;"></div>
+  </div>
+
+  <!-- C3 -->
+  <div id="c3" class="col on">
+    <div class="chdr">
+      <span class="chdr-lbl">Slide Preview</span>
+      <span id="slideCnt"></span>
+    </div>
+    <div id="slides"></div>
+  </div>
+</div>
+
+<!-- Unsaved changes modal -->
+<div id="unsavedModal" class="overlay off">
+  <div class="modal">
+    <div class="modal-hdr">Unsaved Changes</div>
+    <div class="modal-body" id="unsavedMsg" style="font-size:12px;color:var(--t2);line-height:1.6;">You have unsaved changes. What would you like to do?</div>
+    <div class="modal-foot">
+      <button class="btn" onclick="unsavedKeep()">Keep Editing</button>
+      <button class="btn dan" onclick="unsavedDiscard()">Discard</button>
+    </div>
+  </div>
+</div>
+
+<!-- Rename / Save-name modal -->
+<div id="nameModal" class="overlay off">
+  <div class="modal">
+    <div class="modal-hdr" id="nameModalHdr">Save Service Order</div>
+    <div class="modal-body">
+      <label class="fl" style="display:block;margin-bottom:6px">Service Order Name</label>
+      <input type="text" class="fi" id="nameInput" placeholder="e.g. Sunday 19 Oct 2025" oninput="" onkeydown="if(event.key==='Enter')nameOk()">
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="nameCancel()">Cancel</button>
+      <button class="btn ok" onclick="nameOk()">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Load SO modal -->
+<div id="loadModal" class="overlay off">
+  <div class="modal wide">
+    <div class="modal-hdr">Load Service Order</div>
+    <div class="modal-body" style="padding-bottom:6px;">
+      <div style="font-size:11px;color:var(--t2);">Select a saved service order to load.</div>
+      <div id="soListItems"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeLoadModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ─── State ────────────────────────────────────────────────────
+let lib=[], svc=[];
+let mode='blank', draft=null, svcIdx=-1, libSel=null;
+let _qpOpen=false, _draftDirty=false;
+
+// SO repository
+let soRepo={};         // {[id]: {id, name, items[], updatedAt}}
+let soId=null;         // current SO id (null = new/unsaved)
+let soName='Untitled Service';
+
+// Pending callback for unsaved-changes modal
+let _unsavedCb=null;
+
+// ─── Persist ──────────────────────────────────────────────────
+const LS_LIB='lse5_lib', LS_REPO='lse5_repo';
+function saveLib(){try{localStorage.setItem(LS_LIB,JSON.stringify(lib));}catch(e){}}
+function saveRepo(){try{localStorage.setItem(LS_REPO,JSON.stringify(soRepo));}catch(e){}}
+function loadStored(){
+  try{const a=localStorage.getItem(LS_LIB);if(a)lib=JSON.parse(a);}catch(e){}
+  try{const b=localStorage.getItem(LS_REPO);if(b)soRepo=JSON.parse(b);}catch(e){}
+}
+// Auto-save current SO whenever svc changes
+function autoSave(){
+  if(!soId)return;
+  soRepo[soId]={id:soId,name:soName,items:JSON.parse(JSON.stringify(svc)),updatedAt:Date.now()};
+  saveRepo();
+  updSoStatus('Auto-saved');
+}
+
+// ─── Downloads ────────────────────────────────────────────────
+let _dl=null;(async()=>{try{_dl=await claude.use('downloads');}catch(e){}})();
+async function saveJson(obj,name){
+  const j=JSON.stringify(obj,null,2);
+  // Try claude.ai downloads capability first
+  if(_dl){try{await _dl.save({filename:name,data:j});toast('Saved: '+name,'ok');return;}catch(e){}}
+  // Standard browser download (works on GitHub Pages and everywhere else)
+  try{
+    const blob=new Blob([j],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=name;
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1000);
+    toast('Saved: '+name,'ok');
+  }catch(e){
+    try{await navigator.clipboard.writeText(j);toast('Copied to clipboard','ok');}catch(e2){toast('Save failed','er');}
+  }
+}
+
+// ─── Utils ────────────────────────────────────────────────────
+function uid(){return([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,c=>(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16));}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmtDate(ts){if(!ts)return'';const d=new Date(ts);return d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})+' '+d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});}
+function typeFromLabel(lbl){const u=(lbl||'').toLowerCase();if(u.includes('chorus'))return'Chorus';if(u.includes('bridge'))return'Bridge';if(u.includes('pre'))return'Pre-Chorus';if(u.includes('outro'))return'Outro';if(u.includes('interlude'))return'Interlude';if(u.includes('verse'))return'Verse';return'Other';}
+const T2C={Verse:'tv',Chorus:'tc',Bridge:'tb','Pre-Chorus':'tp',Outro:'to',Interlude:'ti',Other:'tx'};
+function bdgCls(lbl){return T2C[typeFromLabel(lbl)]||'tx';}
+
+// ─── Pinyin ───────────────────────────────────────────────────
+const PY_OV={0x534E:'Hua',0x548C:'He',0x5723:'Sheng',0x7962:'Ni',0x795E:'Shen',0x7A23:'Su',0x7A4C:'Su',0x7A63:'Su',0x8036:'Ye',0x57FA:'Ji',0x7763:'Du',0x4E3B:'Zhu'};
+function isCJKPunct(cp){return(cp>=0x3000&&cp<=0x303F)||(cp>=0xFF00&&cp<=0xFF0F)||(cp>=0xFE30&&cp<=0xFE4F)||[0x2014,0x2015,0x201C,0x201D,0x2018,0x2019,0x2026,0xFF01,0xFF0C,0xFF1A,0xFF1B,0xFF1F,0xFF08,0xFF09].includes(cp);}
+function getPy(txt){if(!txt)return'';try{if(typeof PinyinPro==='undefined')return'';return txt.split('\n').map(line=>{if(!line.trim())return'';const tokens=[];for(const ch of line){const cp=ch.codePointAt(0);if(ch===' '||ch==='\t')continue;if(isCJKPunct(cp))continue;if(PY_OV[cp]){tokens.push(PY_OV[cp]);continue;}if(cp>=0x4E00&&cp<=0x9FFF){const py=PinyinPro.pinyin(ch,{toneType:'none',nonZh:'consecutive',separator:' '}).trim();if(py)tokens.push(py);}else tokens.push(ch);}return tokens.join(' ');}).join('\n');}catch(e){return'';}}
+
+// ─── Slides ───────────────────────────────────────────────────
+function paraSli(item){if(!item||!item.text)return[];return item.text.split(/\n[ \t]*\n[ \t]*\n/).map(s=>s.trim()).filter(Boolean).map((text,i)=>({lbl:'Slide '+(i+1),cls:'tp',text,py:'',tr:''}));}
+function songSli(song){if(!song||(song.sections||[]).length===0)return[];const out=[];for(const sec of song.sections){const lines=(sec.text||'').split('\n');const pyTxt=sec.showPinyin?(sec.pinyin||getPy(sec.text)):'';const pyLines=pyTxt?pyTxt.split('\n'):[];const trLines=sec.showTranslation?(sec.translation||'').split('\n'):[];let had=false;for(let i=0;i<lines.length;i+=4){const chunk=lines.slice(i,i+4).join('\n').trim();const pyChunk=pyLines.length?pyLines.slice(i,i+4).join('\n').trim():'';const trChunk=trLines.length?trLines.slice(i,i+4).join('\n').trim():'';if(chunk){out.push({lbl:sec.label,cls:bdgCls(sec.label),text:chunk,py:pyChunk,tr:trChunk});had=true;}}if(!had)out.push({lbl:sec.label,cls:bdgCls(sec.label),text:'',py:'',tr:''});}return out;}
+function c3Slides(){if(mode==='add-para'||mode==='edit-para')return paraSli(draft);if(mode==='song-lib'&&libSel)return songSli(lib.find(x=>x.id===libSel));if(mode==='new-song'||mode==='edit-song')return songSli(draft);return[];}
+
+// ─── SO management ────────────────────────────────────────────
+function updSoHeader(){
+  document.getElementById('soName').textContent=soName;
+}
+function updSoStatus(msg){
+  const el=document.getElementById('soStatus');
+  if(!el)return;
+  el.textContent=msg;
+  clearTimeout(updSoStatus._t);
+  updSoStatus._t=setTimeout(()=>{el.textContent=soId?'':'Not saved';},3000);
+}
+
+function newSo(){
+  const go=()=>{svc=[];soId=null;soName='Untitled Service';svcIdx=-1;mode='blank';draft=null;_draftDirty=false;updSoHeader();updSoStatus('Not saved');rC1();rC2();rC3();};
+  if(_draftDirty){showUnsaved('Start a new service?',go);return;}
+  go();
+}
+
+function saveSo(){
+  if(!soId){
+    // First save: ask for name
+    openNameModal('Save Service Order', soName, name=>{
+      soId=uid();soName=name;
+      soRepo[soId]={id:soId,name:soName,items:JSON.parse(JSON.stringify(svc)),updatedAt:Date.now()};
+      saveRepo();updSoHeader();updSoStatus('Saved');toast(`"${soName}" saved`,'ok');
+    });
+  } else {
+    soRepo[soId]={id:soId,name:soName,items:JSON.parse(JSON.stringify(svc)),updatedAt:Date.now()};
+    saveRepo();updSoStatus('Saved');toast(`"${soName}" saved`,'ok');
+  }
+}
+
+function renameSo(){
+  openNameModal('Rename Service Order', soName, name=>{
+    soName=name;
+    if(soId){soRepo[soId].name=name;saveRepo();}
+    updSoHeader();toast('Renamed','ok');
+  });
+}
+
+function openLoadModal(){
+  const el=document.getElementById('soListItems');
+  const entries=Object.values(soRepo).sort((a,b)=>b.updatedAt-a.updatedAt);
+  if(!entries.length){el.innerHTML='<div class="soEmpty">No saved service orders yet.<br>Use Save to store one.</div>';}
+  else{
+    el.innerHTML=entries.map(e=>`<div class="soItem" onclick="loadSo('${e.id}')">
+      <div class="soItem-info">
+        <div class="soItem-name">${esc(e.name)}</div>
+        <div class="soItem-meta">${(e.items||[]).length} item(s) · ${fmtDate(e.updatedAt)}</div>
+      </div>
+      <button class="iBtn s d" title="Delete" onclick="event.stopPropagation();delSoEntry('${e.id}')">✕</button>
+    </div>`).join('');
+  }
+  document.getElementById('loadModal').classList.remove('off');
+}
+function closeLoadModal(){document.getElementById('loadModal').classList.add('off');}
+function loadSo(id){
+  const entry=soRepo[id];if(!entry)return;
+  const go=()=>{
+    svc=JSON.parse(JSON.stringify(entry.items||[]));
+    soId=entry.id;soName=entry.name;
+    svcIdx=-1;mode='blank';draft=null;_draftDirty=false;
+    closeLoadModal();updSoHeader();updSoStatus('');
+    rC1();rC2();rC3();toast(`Loaded "${soName}"`,'ok');
+  };
+  if(_draftDirty){closeLoadModal();showUnsaved('Load service order?',go);return;}
+  go();
+}
+function delSoEntry(id){
+  delete soRepo[id];saveRepo();openLoadModal();
+}
+
+// ─── Name modal ───────────────────────────────────────────────
+let _nameCb=null;
+function openNameModal(title,current,cb){
+  _nameCb=cb;
+  document.getElementById('nameModalHdr').textContent=title;
+  document.getElementById('nameInput').value=current||'';
+  document.getElementById('nameModal').classList.remove('off');
+  setTimeout(()=>document.getElementById('nameInput').focus(),60);
+}
+function nameOk(){
+  const v=document.getElementById('nameInput').value.trim();
+  if(!v){toast('Enter a name','er');return;}
+  document.getElementById('nameModal').classList.add('off');
+  if(_nameCb){_nameCb(v);_nameCb=null;}
+}
+function nameCancel(){document.getElementById('nameModal').classList.add('off');_nameCb=null;}
+
+// ─── Unsaved changes modal ─────────────────────────────────────
+function showUnsaved(context, onDiscard){
+  _unsavedCb=onDiscard;
+  document.getElementById('unsavedMsg').textContent=`You have unsaved changes in the current form. Discard and ${context.toLowerCase()}?`;
+  document.getElementById('unsavedModal').classList.remove('off');
+}
+function unsavedKeep(){document.getElementById('unsavedModal').classList.add('off');_unsavedCb=null;}
+function unsavedDiscard(){document.getElementById('unsavedModal').classList.add('off');_draftDirty=false;if(_unsavedCb){_unsavedCb();_unsavedCb=null;}}
+
+// ─── Render C1 ────────────────────────────────────────────────
+function rC1(){
+  const el=document.getElementById('svcScroll');
+  if(!svc.length){el.innerHTML='<div class="svcEmpty">Service is empty.<br>Click + Add to begin,<br>or Load a saved service order.</div>';return;}
+  el.innerHTML=svc.map((item,i)=>{
+    const isP=item.type==='paragraphs',on=svcIdx===i;
+    const meta=isP?paraSli(item).length+' slide(s)':(item.sections||[]).length+' section(s)';
+    return`<div class="svcRow${on?' on':''}" onclick="selSvc(${i})">
+      <div class="stripe ${isP?'s-p':'s-s'}"></div>
+      <div class="svcInfo"><div class="svcTitle">${esc(item.title)||'Untitled'}</div><div class="svcMeta">${isP?'¶':'♪'} ${meta}</div></div>
+      <div class="svcBtns">
+        <div class="svcBtnRow"><button class="iBtn s" onclick="event.stopPropagation();mvUp(${i})">▲</button><button class="iBtn s" onclick="event.stopPropagation();mvDn(${i})">▼</button></div>
+        <div class="svcBtnRow"><button class="iBtn s d" onclick="event.stopPropagation();rmSvc(${i})">✕</button></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function selSvc(i){
+  const go=()=>{svcIdx=i;const item=svc[i];if(item.type==='paragraphs'){draft=JSON.parse(JSON.stringify(item));mode='edit-para';}else{draft=JSON.parse(JSON.stringify(item));mode='edit-song';}_draftDirty=false;rC1();rC2();rC3();mobSw('c2');};
+  if(_draftDirty){showUnsaved('edit another item',go);}else go();
+}
+function mvUp(i){if(i<=0)return;[svc[i-1],svc[i]]=[svc[i],svc[i-1]];if(svcIdx===i)svcIdx=i-1;else if(svcIdx===i-1)svcIdx=i;autoSave();rC1();}
+function mvDn(i){if(i>=svc.length-1)return;[svc[i],svc[i+1]]=[svc[i+1],svc[i]];if(svcIdx===i)svcIdx=i+1;else if(svcIdx===i+1)svcIdx=i;autoSave();rC1();}
+function rmSvc(i){svc.splice(i,1);if(svcIdx===i){svcIdx=-1;mode='blank';draft=null;_draftDirty=false;}else if(svcIdx>i)svcIdx--;autoSave();rC1();rC2();rC3();}
+
+// ─── Add picker ───────────────────────────────────────────────
+function togglePicker(){document.getElementById('addPicker').classList.toggle('on');}
+function closePicker(){document.getElementById('addPicker').classList.remove('on');}
+document.addEventListener('click',e=>{const p=document.getElementById('addPicker'),b=document.getElementById('addBtn');if(p.classList.contains('on')&&!p.contains(e.target)&&e.target!==b)p.classList.remove('on');});
+function startAddPara(){
+  const go=()=>{closePicker();draft={id:uid(),type:'paragraphs',title:'',text:'',colorPresetIdx:0,artist:'',filePath:''};svcIdx=-1;mode='add-para';_draftDirty=false;rC1();rC2();rC3();mobSw('c2');};
+  if(_draftDirty){showUnsaved('add a paragraph',go);}else go();
+}
+function startAddSong(){
+  const go=()=>{closePicker();libSel=null;draft=null;svcIdx=-1;mode='song-lib';_draftDirty=false;rC1();rC2();rC3();mobSw('c2');};
+  if(_draftDirty){showUnsaved('add a song',go);}else go();
+}
+function blank(){
+  const go=()=>{mode='blank';draft=null;svcIdx=-1;libSel=null;_draftDirty=false;rC1();rC2();rC3();};
+  if(_draftDirty){showUnsaved('go back',go);}else go();
+}
+
+// ─── Render C2 ────────────────────────────────────────────────
+function rC2(){
+  const lbl=document.getElementById('c2lbl'),body=document.getElementById('c2body');
+  if(mode==='blank'){lbl.textContent='Content';body.innerHTML=`<div class="empty" style="height:100%"><div class="ei">♪</div><p class="ep">Select a service item to edit,<br>or use + Add in the service order.</p></div>`;return;}
+  if(mode==='add-para'){lbl.textContent='New Paragraph';rParaForm(body);return;}
+  if(mode==='edit-para'){lbl.textContent='Edit Paragraph';rParaForm(body);return;}
+  if(mode==='song-lib'){lbl.textContent='Song Library';rSongLib(body);return;}
+  if(mode==='new-song'){lbl.textContent='New Song';rSongForm(body);return;}
+  if(mode==='edit-song'){lbl.textContent='Edit Song';rSongForm(body);return;}
+}
+
+// ─── Para form ────────────────────────────────────────────────
+function rParaForm(body){
+  body.innerHTML=`
+    <div class="c2Scroll">
+      <div class="fg" style="margin-bottom:10px">
+        <label class="fl">Title</label>
+        <input class="fi" id="ptitle" value="${esc(draft.title)}" placeholder="e.g. Call to Worship" oninput="draft.title=this.value;_draftDirty=true;rC3()">
+      </div>
+      <div class="fg">
+        <label class="fl">Text <span style="font-weight:400;color:var(--t3)">(2 blank lines between slides)</span></label>
+        <textarea class="fta" id="ptext" rows="14" oninput="draft.text=this.value;_draftDirty=true;rC3()" placeholder="Slide 1 text&#10;&#10;&#10;Slide 2 text">${esc(draft.text)}</textarea>
+      </div>
+    </div>
+    <div class="c2Bar">
+      <button class="btn ok" onclick="savePara()">${mode==='add-para'?'Add to Service':'Save'}</button>
+      <button class="btn" onclick="blank()">Cancel</button>
+    </div>`;
+}
+function savePara(){
+  if(!draft.title.trim()){toast('Enter a title first','er');return;}
+  if(mode==='add-para'){svc.push(JSON.parse(JSON.stringify(draft)));toast('Paragraph added','ok');}
+  else{svc[svcIdx]=JSON.parse(JSON.stringify(draft));toast('Paragraph saved','ok');}
+  _draftDirty=false;autoSave();rC1();
+  // Go back to blank
+  mode='blank';draft=null;svcIdx=-1;rC2();rC3();
+}
+
+// ─── Song library ─────────────────────────────────────────────
+function rSongLib(body){
+  body.innerHTML=`
+    <div id="libSrchWrap"><input id="libQ" type="text" placeholder="Search songs…" oninput="filterLib()" autocomplete="off"></div>
+    <div id="libItems" style="flex:1;overflow-y:auto;min-height:0;"></div>
+    <div id="libFoot">
+      <button class="fBtn a" onclick="startNewSong()">+ New Song</button>
+      <button class="fBtn" onclick="document.getElementById('impLib').click()">⬆ Import</button>
+      <button class="fBtn" onclick="blank()">✕ Exit</button>
+      <input type="file" id="impLib" accept=".json" style="display:none" onchange="importLib(event)">
+    </div>`;
+  filterLib();
+}
+function filterLib(){
+  const q=(document.getElementById('libQ')?.value||'').toLowerCase();
+  const el=document.getElementById('libItems');if(!el)return;
+  const filtered=lib.filter(s=>!q||s.title.toLowerCase().includes(q)||(s.artist||'').toLowerCase().includes(q));
+  if(!filtered.length){el.innerHTML=`<div style="padding:20px;color:var(--t3);text-align:center;font-size:11px">${lib.length?'No results.':'No songs. Click + New Song.'}</div>`;return;}
+  el.innerHTML=filtered.map(s=>{
+    const chi=(s.sections||[]).some(x=>x.isChinese),on=libSel===s.id;
+    return`<div class="libRow${on?' on':''}" onclick="libClick('${s.id}')">
+      <div class="libTop">
+        <div class="libInfo">
+          <div class="libTitle">${esc(s.title)||'Untitled'}</div>
+          <div class="libMeta">${esc(s.artist)||''}${s.artist?' · ':''}${(s.sections||[]).length} section${(s.sections||[]).length!==1?'s':''}${chi?' · 中':''}</div>
+        </div>
+        <button class="iBtn s g" title="Add to service" onclick="event.stopPropagation();libAdd('${s.id}')">+</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function libClick(id){libSel=id;filterLib();rC3();}
+function libAdd(id){
+  const s=lib.find(x=>x.id===id);if(!s)return;
+  svc.push({id:s.id,type:'song',title:s.title,artist:s.artist||'',sections:JSON.parse(JSON.stringify(s.sections||[])),colorPresetIdx:0,filePath:'',text:''});
+  autoSave();rC1();toast(`"${s.title}" added to service`,'ok');
+}
+
+// ─── Song form ────────────────────────────────────────────────
+function startNewSong(){
+  const go=()=>{draft={id:uid(),title:'',artist:'',sections:[mkSec()],type:'song'};mode='new-song';svcIdx=-1;_qpOpen=false;_draftDirty=false;rC2();rC3();};
+  if(_draftDirty){showUnsaved('create a new song',go);}else go();
+}
+function mkSec(label='Verse 1'){return{id:uid(),label,text:'',isChinese:false,showPinyin:false,showTranslation:false,translation:'',pinyin:'',_open:false};}
+
+function rSongForm(body){
+  body.innerHTML=`
+    <div class="c2Scroll" id="sfScroll">
+      <div class="frow">
+        <div class="fg"><label class="fl">Song Title</label><input class="fi" id="stitle" value="${esc(draft.title)}" placeholder="e.g. Amazing Grace" oninput="draft.title=this.value;_draftDirty=true;rC3()"></div>
+        <div class="fg" style="max-width:115px"><label class="fl">Artist</label><input class="fi" id="sartist" value="${esc(draft.artist||'')}" placeholder="optional" oninput="draft.artist=this.value;_draftDirty=true;"></div>
+      </div>
+      ${rQpPanel()}
+      <div class="sdiv">Sections (${(draft.sections||[]).length})</div>
+      <div id="secs">${(draft.sections||[]).map((sec,i)=>rSecCard(sec,i)).join('')}</div>
+      <button class="addsec" onclick="addSec()">+ Add Section</button>
+    </div>
+    <div class="c2Bar">
+      ${mode==='new-song'
+        ?`<button class="btn ok" onclick="saveNewSong()">Save to Library</button><button class="btn" onclick="cancelNewSong()">Cancel</button>`
+        :`<button class="btn ok" onclick="saveEditSong()">Save</button><button class="btn" onclick="blank()">Cancel</button>`
+      }
+    </div>`;
+}
+
+function rQpPanel(){
+  return`<div class="qpanel">
+    <div class="qphdr" onclick="togQp()">
+      <span class="qptitle">⚡ Quick Paste</span>
+      <span class="qpsub">Paste [Section]-labelled lyrics to auto-import</span>
+      <span class="qpchev" id="qpChev">${_qpOpen?'▲':'▼'}</span>
+    </div>
+    <div class="qpbody${_qpOpen?' on':''}" id="qpBody">
+      <div class="qphint">Start each section with a label in square brackets:<br><code>[Verse 1]</code> → <code>[Chorus]</code> → <code>[Bridge]</code></div>
+      <textarea class="fta" id="qpLyrics" rows="7" placeholder="[Verse 1]&#10;Line 1&#10;Line 2&#10;&#10;[Chorus]&#10;Chorus line 1&#10;Chorus line 2"></textarea>
+      <div class="qprow">
+        <label class="qpck"><input type="checkbox" id="qpChi"> Chinese (中文) — auto-generate pinyin</label>
+        <div style="flex:1"></div>
+        <button class="btn ok" onclick="doQuickPaste()">Import Sections</button>
+      </div>
+    </div>
+  </div>`;
+}
+function togQp(){_qpOpen=!_qpOpen;const b=document.getElementById('qpBody'),c=document.getElementById('qpChev');if(b)b.classList.toggle('on',_qpOpen);if(c)c.textContent=_qpOpen?'▲':'▼';}
+function doQuickPaste(){
+  const raw=(document.getElementById('qpLyrics')?.value||'').trim();
+  if(!raw){toast('Paste lyrics first','er');return;}
+  const isChi=document.getElementById('qpChi')?.checked||false;
+  const sections=parseQuickLyrics(raw,isChi);
+  if(!sections.length){toast('No sections found','er');return;}
+  draft.sections=sections;_draftDirty=true;_qpOpen=false;rC2();rC3();toast(`Imported ${sections.length} section(s)`,'ok');
+}
+function parseQuickLyrics(raw,isChi){
+  const lines=raw.split('\n'),hdr=/^\[(.+)\]\s*$/;
+  const sections=[];let cur=null;
+  const flush=()=>{if(cur){cur.text=cur.text.trimEnd();if(cur.text||cur.label)sections.push(cur);}};
+  for(const line of lines){
+    const m=line.trim().match(hdr);
+    if(m){flush();cur={id:uid(),label:m[1],text:'',isChinese:isChi,showPinyin:isChi,showTranslation:false,translation:'',pinyin:'',_open:true};}
+    else if(cur)cur.text+=line+'\n';
+    else{cur={id:uid(),label:'Verse 1',text:line+'\n',isChinese:isChi,showPinyin:isChi,showTranslation:false,translation:'',pinyin:'',_open:true};}
+  }
+  flush();
+  if(isChi)sections.forEach(s=>{s.pinyin=getPy(s.text);});
+  return sections;
+}
+
+function rSecCard(sec,i){
+  const hasPy=sec.isChinese&&sec.showPinyin;
+  const pyH=hasPy?`<div class="pyprev" id="py_${sec.id}">${esc(sec.pinyin||getPy(sec.text))||'<span style="color:var(--t3)">…</span>'}</div>`:'';
+  const hasTr=sec.isChinese&&sec.showTranslation;
+  const trH=hasTr?`<div class="fg" style="margin-top:7px"><label class="fl">Translation</label><textarea class="fta" rows="3" oninput="upd('${sec.id}','translation',this.value);_draftDirty=true;rC3()">${esc(sec.translation)}</textarea></div>`:'';
+  return`<div class="sc" id="sc_${sec.id}">
+    <div class="schdr" onclick="togSec('${sec.id}')">
+      <span class="tbdg ${bdgCls(sec.label)}">${esc(typeFromLabel(sec.label))}</span>
+      <span class="sclbl">${esc(sec.label)}</span>
+      <span class="scchev">${sec._open?'▲':'▼'}</span>
+      <button class="scdel" onclick="event.stopPropagation();delSec('${sec.id}')">✕</button>
+    </div>
+    <div class="scbody${sec._open?' on':''}" id="scb_${sec.id}">
+      <div class="fg" style="margin-bottom:8px">
+        <label class="fl">Label</label>
+        <input class="fi" value="${esc(sec.label)}" oninput="upd('${sec.id}','label',this.value);_draftDirty=true;rerSec('${sec.id}')" placeholder="e.g. Verse 1, Chorus, Bridge">
+      </div>
+      <div class="fg" style="margin-bottom:4px">
+        <label class="fl">Lyrics Text</label>
+        <textarea class="fta" rows="4" oninput="upd('${sec.id}','text',this.value);_draftDirty=true;rC3();updPy('${sec.id}')" placeholder="Enter lyrics…">${esc(sec.text)}</textarea>
+      </div>
+      <div class="ckrow"><input type="checkbox" id="chi_${sec.id}" ${sec.isChinese?'checked':''} onchange="upd('${sec.id}','isChinese',this.checked);_draftDirty=true;rerSec('${sec.id}')"><label for="chi_${sec.id}">Chinese (中文)</label></div>
+      ${sec.isChinese?`
+      <div class="ckrow"><input type="checkbox" id="pyc_${sec.id}" ${sec.showPinyin?'checked':''} onchange="upd('${sec.id}','showPinyin',this.checked);_draftDirty=true;rerSec('${sec.id}')"><label for="pyc_${sec.id}">Show Pinyin</label></div>
+      ${pyH}
+      <div class="ckrow"><input type="checkbox" id="trc_${sec.id}" ${sec.showTranslation?'checked':''} onchange="upd('${sec.id}','showTranslation',this.checked);_draftDirty=true;rerSec('${sec.id}')"><label for="trc_${sec.id}">Show Translation</label></div>
+      ${trH}`:''}
+    </div>
+  </div>`;
+}
+function togSec(id){const s=draft.sections.find(x=>x.id===id);if(!s)return;s._open=!s._open;const b=document.getElementById(`scb_${id}`),c=document.querySelector(`#sc_${id} .scchev`);if(b)b.classList.toggle('on',s._open);if(c)c.textContent=s._open?'▲':'▼';}
+function upd(id,k,v){const s=draft.sections.find(x=>x.id===id);if(s)s[k]=v;}
+function rerSec(id){const i=draft.sections.findIndex(x=>x.id===id);if(i<0)return;draft.sections[i]._open=true;const el=document.getElementById(`sc_${id}`);if(el)el.outerHTML=rSecCard(draft.sections[i],i);rC3();}
+function delSec(id){draft.sections=draft.sections.filter(x=>x.id!==id);_draftDirty=true;rC2();rC3();}
+function addSec(){const n=draft.sections.filter(x=>typeFromLabel(x.label)==='Verse').length;const s=mkSec(n?`Verse ${n+1}`:'Verse 1');s._open=true;draft.sections.push(s);_draftDirty=true;rC2();rC3();setTimeout(()=>{const el=document.getElementById('sfScroll');if(el)el.scrollTop=el.scrollHeight;},50);}
+function updPy(id){const s=draft.sections.find(x=>x.id===id);if(!s||!s.isChinese||!s.showPinyin)return;const py=getPy(s.text);s.pinyin=py;const el=document.getElementById(`py_${id}`);if(el)el.textContent=py||'…';}
+
+function saveNewSong(){
+  if(!draft.title.trim()){toast('Enter a song title','er');return;}
+  const c=cleanSong(draft);lib.push(c);saveLib();
+  libSel=c.id;mode='song-lib';draft=null;_draftDirty=false;
+  rC2();rC3();toast('Song saved to library','ok');
+}
+function cancelNewSong(){
+  const go=()=>{mode='song-lib';draft=null;_draftDirty=false;rC2();rC3();};
+  if(_draftDirty){showUnsaved('go back to library',go);}else go();
+}
+function saveEditSong(){
+  if(!draft.title.trim()){toast('Enter a song title','er');return;}
+  svc[svcIdx]=Object.assign({},svc[svcIdx],cleanSong(draft));
+  _draftDirty=false;autoSave();rC1();blank();toast('Song saved','ok');
+}
+function cleanSong(s){return{id:s.id,type:'song',title:s.title,artist:s.artist||'',sections:(s.sections||[]).map(x=>({id:x.id||uid(),label:x.label,text:x.text,pinyin:x.pinyin||'',isChinese:!!x.isChinese,showPinyin:!!x.showPinyin,showTranslation:!!x.showTranslation,translation:x.translation||''})),colorPresetIdx:0,filePath:'',text:''};}
+
+// ─── Render C3 ────────────────────────────────────────────────
+function rC3(){
+  const slides=c3Slides(),el=document.getElementById('slides'),cnt=document.getElementById('slideCnt');
+  if(!slides.length){el.innerHTML='<div class="c3mt"><p class="c3mp">No slides to preview</p></div>';cnt.textContent='';return;}
+  cnt.textContent=slides.length+(slides.length===1?' slide':' slides');
+  el.innerHTML=slides.map((sl,i)=>`<div class="slide"><span class="tbdg ${sl.cls}">${esc(sl.lbl)}</span><div class="stxt">${esc(sl.text)}</div>${sl.py?`<div class="spytxt">${esc(sl.py)}</div>`:''}${sl.tr?`<div class="strtxt">${esc(sl.tr)}</div>`:''}
+    <span class="snum">${i+1}</span></div>`).join('');
+}
+
+// ─── Export / Import ──────────────────────────────────────────
+async function doExport(){
+  if(!svc.length){toast('Service is empty','er');return;}
+  const items=svc.map(item=>{
+    if(item.type==='paragraphs')return{type:'paragraphs',id:item.id,title:item.title,artist:'',text:item.text||'',filePath:'',colorPresetIdx:0};
+    const sections=(item.sections||[]).map(s=>{const o={label:s.label,type:typeFromLabel(s.label),text:s.text,isChinese:!!s.isChinese,showPinyin:!!s.showPinyin,showTranslation:!!s.showTranslation};if(s.translation)o.translation=s.translation;return o;});
+    return{type:'song',id:item.id,title:item.title,artist:item.artist||'',sections,colorPresetIdx:0,filePath:'',text:''};
+  });
+  await saveJson({version:1,items},'service_export.json');
+}
+function importSvc(evt){
+  const f=evt.target.files&&evt.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>{try{
+    const obj=JSON.parse(e.target.result);
+    let items=(obj.items||[]).filter(it=>it.type==='song'||it.type==='paragraphs'||it.type==='ctw'||it.type==='scripture');
+    items=items.map(it=>{const base={id:it.id||uid(),title:it.title||'',artist:it.artist||'',colorPresetIdx:0,filePath:'',text:it.text||''};if(it.type==='song'){const secs=(it.sections||[]).map(s=>({id:uid(),label:s.label||'',text:s.text||'',pinyin:s.pinyin||'',isChinese:!!s.isChinese,showPinyin:!!s.showPinyin,showTranslation:!!s.showTranslation,translation:s.translation||''}));return Object.assign(base,{type:'song',sections:secs});}return Object.assign(base,{type:'paragraphs'});});
+    if(!items.length){toast('No items found','er');return;}
+    svc=svc.filter(i=>i.type!=='song'&&i.type!=='paragraphs');svc=items.concat(svc);
+    autoSave();blank();toast(`Imported ${items.length} item(s)`,'ok');
+  }catch(er){toast('Invalid JSON','er');}};
+  r.readAsText(f);evt.target.value='';
+}
+function importLib(evt){
+  const f=evt.target.files&&evt.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>{try{
+    const obj=JSON.parse(e.target.result);
+    const songs=obj.songs||(Array.isArray(obj)?obj:null);
+    if(!songs){toast('Expected {songs:[...]}','er');return;}
+    let added=0;songs.forEach(s=>{if(!s.title||lib.find(x=>x.id===s.id))return;lib.push({id:s.id||uid(),title:s.title,artist:s.artist||'',sections:(s.sections||[]).map(sec=>Object.assign({id:uid()},sec))});added++;});
+    saveLib();filterLib();toast(`Added ${added} song(s)`,'ok');
+  }catch(er){toast('Invalid JSON','er');}};
+  r.readAsText(f);evt.target.value='';
+}
+
+// ─── Toast ────────────────────────────────────────────────────
+let _tt;function toast(msg,type=''){const el=document.getElementById('toast');el.textContent=msg;el.className='on'+(type?' '+type:'');clearTimeout(_tt);_tt=setTimeout(()=>el.className='',2800);}
+
+// ─── Mobile ───────────────────────────────────────────────────
+function mobSw(col){if(window.innerWidth>680){['c1','c2','c3'].forEach(id=>document.getElementById(id).classList.add('on'));return;}['c1','c2','c3'].forEach(id=>document.getElementById(id).classList.toggle('on',id===col));document.querySelectorAll('.mtab').forEach((b,i)=>b.classList.toggle('on',['c1','c2','c3'][i]===col));}
+window.addEventListener('resize',()=>{if(window.innerWidth>680)['c1','c2','c3'].forEach(id=>document.getElementById(id).classList.add('on'));});
+
+// ─── Init ─────────────────────────────────────────────────────
+loadStored();
+if(!lib.length){
+  lib=[
+    {id:uid(),title:'Amazing Grace',artist:'John Newton',sections:[
+      {id:uid(),label:'Verse 1',text:"Amazing grace, how sweet the sound\nThat saved a wretch like me\nI once was lost, but now am found\nWas blind but now I see",isChinese:false,showPinyin:false,showTranslation:false,translation:'',pinyin:''},
+      {id:uid(),label:'Chorus',text:"My chains are gone, I've been set free\nMy God, my Savior has ransomed me",isChinese:false,showPinyin:false,showTranslation:false,translation:'',pinyin:''}
+    ]},
+    {id:uid(),title:'奇异恩典',artist:'',sections:[
+      {id:uid(),label:'第1节',text:'奇异恩典何等甘甜\n我罪已得赦免\n前我失丧今被寻回\n瞎眼今得看见',isChinese:true,showPinyin:true,showTranslation:true,translation:'Amazing grace how sweet the sound\nThat saved a wretch like me\nI once was lost but now am found\nWas blind but now I see',pinyin:''},
+      {id:uid(),label:'第2节',text:'如此恩典使我敬畏\n使我心得安慰\n初信之时既蒙恩惠\n直到永永远远',isChinese:true,showPinyin:true,showTranslation:false,translation:'',pinyin:''}
+    ]}
+  ];
+  lib.forEach(song=>song.sections.forEach(sec=>{if(sec.isChinese&&sec.showPinyin&&!sec.pinyin)sec.pinyin=getPy(sec.text);}));
+  saveLib();
+}
+// Always start with empty service (user must load or create new)
+svc=[];soId=null;soName='Untitled Service';
+updSoHeader();
+document.getElementById('soStatus').textContent='Not saved';
+if(window.innerWidth>680)['c1','c2','c3'].forEach(id=>document.getElementById(id).classList.add('on'));
+rC1();rC2();rC3();
+</script>
